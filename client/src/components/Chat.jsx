@@ -452,7 +452,7 @@ const Chat = () => {
           Nirogya
         </span>
         <div className="ayur-header-actions">
-          <span className="ayur-username">Welcome, {getUserName()}</span>
+          <span className="ayur-username">{getUserName()}</span>
           <button className="ayur-btn" onClick={handleLogout}>
             Logout
           </button>
