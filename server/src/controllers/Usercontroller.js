@@ -42,8 +42,8 @@ exports.login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax", // or "none" if using HTTPS
-      secure: false,   // true if using HTTPS
+      sameSite: "none", // or "none" if using HTTPS
+      secure: true,   // true if using HTTPS
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 7 days
     });
 

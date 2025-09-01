@@ -125,7 +125,7 @@ const Chat = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/chat/generate",
+        "https://nirogya-chatbot-backend.onrender.com/api/chat/generate",
         { query: input },
         { withCredentials: true }
       );
@@ -160,7 +160,7 @@ const Chat = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:3000/api/auth/logout",
+        "https://nirogya-chatbot-backend.onrender.com/api/auth/logout",
         {},
         { withCredentials: true }
       );
