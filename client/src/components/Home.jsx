@@ -23,9 +23,10 @@ const Home = () => {
     <div className="min-h-screen flex flex-col transition-colors duration-500 bg-[#1e2b1a]">
       {/* Botanical Parallax SVG */}
       <svg
-        className="fixed top-0 left-0 w-[420px] h-[320px] z-0 pointer-events-none animate-ayur-parallax"
+        className="fixed top-0 left-0 z-0 pointer-events-none animate-ayur-parallax w-[70vw] max-w-[420px] h-[40vw] max-h-[320px] sm:w-[420px] sm:h-[320px]"
         viewBox="0 0 400 400"
         fill="none"
+        style={{ minWidth: '140px', minHeight: '80px' }}
       >
         <ellipse
           cx="200"
@@ -52,8 +53,8 @@ const Home = () => {
 
       {/* Navbar */}
       <nav className="backdrop-blur-lg bg-[#232b1a]/60 fixed w-full z-20 top-0 left-0 shadow-sm glassmorph">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-3">
-          <span className="text-[#A8E063] font-semibold text-xl font-[Mukta] flex items-center gap-2 drop-shadow">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
+          <span className="text-[#A8E063] font-semibold text-lg sm:text-xl font-[Mukta] flex items-center gap-2 drop-shadow">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#3d5223] shadow-neumorph hover:animate-pulse">
               <span role="img" aria-label="leaf">
                 🌿
@@ -61,7 +62,7 @@ const Home = () => {
             </span>
             Nirogya
           </span>
-          <div className="hidden md:flex gap-4">
+          <div className="hidden md:flex gap-3 sm:gap-4">
             <Link
               to="/login"
               className="ayur-btn transition duration-200 font-medium"
@@ -79,17 +80,17 @@ const Home = () => {
       </nav>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col justify-center items-center pt-32 pb-12 px-4 relative z-10">
-        <div className="max-w-xl w-full bg-[#232b1a]/80 rounded-3xl shadow-xl glassmorph p-8 text-center border border-[#A8E063]/20">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#A8E063] font-[Mukta] mb-4 tracking-tight drop-shadow">
-            Welcome to Nirogya
-            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3d5223] shadow-neumorph mb-2 ml-2 hover:animate-pulse">
+      <main className="flex-1 flex flex-col justify-center items-center pt-28 sm:pt-32 pb-10 sm:pb-12 px-2 sm:px-4 relative z-10">
+        <div className="max-w-xl w-full bg-[#232b1a]/80 rounded-3xl shadow-xl glassmorph p-4 sm:p-8 text-center border border-[#A8E063]/20">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#A8E063] font-[Mukta] mb-4 tracking-tight drop-shadow flex flex-col sm:flex-row items-center justify-center gap-2">
+            <span>Welcome to Nirogya</span>
+            <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3d5223] shadow-neumorph mb-2 sm:mb-0 hover:animate-pulse">
               <span role="img" aria-label="leaf">
                 🌿
               </span>
             </span>
           </h1>
-          <p className="mb-6 font-medium text-[#e0ffe0]">
+          <p className="mb-6 font-medium text-[#e0ffe0] text-base sm:text-lg">
             Your personal Ayurvedic assistant. Chat with our bot to get natural
             remedies, wellness tips, and holistic health advice rooted in
             ancient Indian wisdom.
@@ -103,7 +104,7 @@ const Home = () => {
             </button>
           </div>
           {!isLoggedIn && (
-            <p className="mt-6 text-sm text-[#a8e063]">
+            <p className="mt-6 text-xs sm:text-sm text-[#a8e063]">
               Please{" "}
               <Link
                 to="/register"
@@ -124,7 +125,7 @@ const Home = () => {
         </div>
         {/* Decorative botanical illustration */}
         <svg
-          className="absolute bottom-0 right-0 w-40 md:w-64 opacity-40 pointer-events-none select-none"
+          className="absolute bottom-0 right-0 w-28 sm:w-40 md:w-64 opacity-40 pointer-events-none select-none"
           viewBox="0 0 200 120"
           fill="none"
         >
@@ -194,6 +195,23 @@ const Home = () => {
         }
         .animate-ayur-parallax {
           animation: ayur-parallax 18s linear infinite alternate;
+        }
+        /* Responsive SVG background for mobile */
+        @media (max-width: 640px) {
+          .animate-ayur-parallax {
+            left: -40px !important;
+            top: -40px !important;
+            width: 90vw !important;
+            height: 32vw !important;
+            min-width: 100px !important;
+            min-height: 60px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .glassmorph {
+            padding: 1rem !important;
+            border-radius: 1rem !important;
+          }
         }
       `}</style>
     </div>

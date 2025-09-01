@@ -50,12 +50,13 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center transition-colors duration-500 bg-[#1e2b1a]">
+    <div className="min-h-screen flex items-center justify-center transition-colors duration-500 bg-[#1e2b1a] px-2 sm:px-4">
       {/* Botanical Parallax SVG */}
       <svg
-        className="fixed top-0 left-0 w-[420px] h-[320px] z-0 pointer-events-none animate-ayur-parallax"
+        className="fixed top-0 left-0 z-0 pointer-events-none animate-ayur-parallax w-[70vw] max-w-[420px] h-[40vw] max-h-[320px] sm:w-[420px] sm:h-[320px]"
         viewBox="0 0 400 400"
         fill="none"
+        style={{ minWidth: '140px', minHeight: '80px' }}
       >
         <ellipse
           cx="200"
@@ -80,7 +81,7 @@ function Login() {
         </defs>
       </svg>
 
-      <div className="max-w-md w-full mx-auto mt-20 p-8 rounded-3xl shadow-xl glassmorph relative z-10 border border-[#A8E063]/20 bg-[#232b1a]/80">
+      <div className="max-w-md w-full mx-auto mt-10 sm:mt-20 p-4 sm:p-8 rounded-3xl shadow-xl glassmorph relative z-10 border border-[#A8E063]/20 bg-[#232b1a]/80">
         <div className="flex flex-col items-center mb-6">
           <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3d5223] shadow-neumorph mb-2 hover:animate-pulse">
             <span role="img" aria-label="leaf">
@@ -146,7 +147,7 @@ function Login() {
             </button>
           </div>
         </form>
-        <p className="mt-6 text-center text-[#a8e063]">
+        <p className="mt-6 text-center text-[#a8e063] text-sm sm:text-base">
           Don't have an account?{" "}
           <Link
             to="/register"
@@ -157,7 +158,7 @@ function Login() {
         </p>
         {/* Decorative botanical illustration */}
         <svg
-          className="absolute bottom-0 right-0 w-28 md:w-40 opacity-30 pointer-events-none select-none"
+          className="absolute bottom-0 right-0 w-20 sm:w-28 md:w-40 opacity-30 pointer-events-none select-none"
           viewBox="0 0 120 60"
           fill="none"
         >
@@ -226,6 +227,23 @@ function Login() {
           color: #fff;
           transform: translateY(-2px) scale(1.04);
           box-shadow: 0 6px 24px 0 #a8e06344;
+        }
+        /* Responsive SVG background for mobile */
+        @media (max-width: 640px) {
+          .animate-ayur-parallax {
+            left: -40px !important;
+            top: -40px !important;
+            width: 90vw !important;
+            height: 32vw !important;
+            min-width: 100px !important;
+            min-height: 60px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .glassmorph {
+            padding: 1rem !important;
+            border-radius: 1rem !important;
+          }
         }
       `}</style>
     </div>

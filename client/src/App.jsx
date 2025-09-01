@@ -7,12 +7,15 @@ import Chat from './components/Chat';
 import './index.css';
 
 function App() {
-  
-
   return (
-    <div className="font-[Mukta] min-h-screen bg-[#FFF8E1] dark:bg-[#1e2b1a] transition-colors duration-500">
-      {/* Global botanical background */}
-      <svg className="fixed top-0 left-0 w-[420px] h-[320px] z-0 pointer-events-none animate-ayur-parallax" viewBox="0 0 400 400" fill="none">
+    <div className="font-[Mukta] min-h-screen bg-[#FFF8E1] dark:bg-[#1e2b1a] transition-colors duration-500 relative overflow-x-hidden px-2 sm:px-4 md:px-8">
+      {/* Responsive botanical background */}
+      <svg
+        className="fixed top-0 left-0 z-0 pointer-events-none animate-ayur-parallax w-[70vw] max-w-[420px] h-[40vw] max-h-[320px] sm:w-[420px] sm:h-[320px]"
+        viewBox="0 0 400 400"
+        fill="none"
+        style={{ minWidth: '200px', minHeight: '120px' }}
+      >
         <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#leafGrad)" opacity="0.13"/>
         <defs>
           <linearGradient id="leafGrad" x1="0" y1="0" x2="400" y2="400" gradientUnits="userSpaceOnUse">
@@ -54,6 +57,17 @@ function App() {
         }
         .animate-ayur-parallax {
           animation: ayur-parallax 18s linear infinite alternate;
+        }
+        /* Responsive SVG background for mobile */
+        @media (max-width: 640px) {
+          .animate-ayur-parallax {
+            left: -40px !important;
+            top: -40px !important;
+            width: 90vw !important;
+            height: 32vw !important;
+            min-width: 140px !important;
+            min-height: 80px !important;
+          }
         }
       `}</style>
     </div>

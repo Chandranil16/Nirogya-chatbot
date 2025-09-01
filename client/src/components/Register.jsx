@@ -46,134 +46,135 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center transition-colors duration-500 bg-[#1e2b1a]">
+    <div className="min-h-screen flex items-center justify-center transition-colors duration-500 bg-[#1e2b1a] px-2 sm:px-4">
       {/* Botanical Parallax SVG */}
-        <svg
-          className="fixed top-0 left-0 w-[420px] h-[320px] z-0 pointer-events-none animate-ayur-parallax"
-          viewBox="0 0 400 400"
-          fill="none"
-        >
-          <ellipse
-            cx="200"
-            cy="200"
-            rx="180"
-            ry="120"
-            fill="url(#leafGrad)"
-            opacity="0.13"
-          />
-          <defs>
-            <linearGradient
-          id="leafGrad"
-          x1="0"
-          y1="0"
-          x2="400"
-          y2="400"
-          gradientUnits="userSpaceOnUse"
-            >
-          <stop stopColor="#A8E063" />
-          <stop offset="1" stopColor="#56AB2F" />
-            </linearGradient>
-          </defs>
-        </svg>
+      <svg
+        className="fixed top-0 left-0 z-0 pointer-events-none animate-ayur-parallax w-[70vw] max-w-[420px] h-[40vw] max-h-[320px] sm:w-[420px] sm:h-[320px]"
+        viewBox="0 0 400 400"
+        fill="none"
+        style={{ minWidth: '140px', minHeight: '80px' }}
+      >
+        <ellipse
+          cx="200"
+          cy="200"
+          rx="180"
+          ry="120"
+          fill="url(#leafGrad)"
+          opacity="0.13"
+        />
+        <defs>
+          <linearGradient
+            id="leafGrad"
+            x1="0"
+            y1="0"
+            x2="400"
+            y2="400"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#A8E063" />
+            <stop offset="1" stopColor="#56AB2F" />
+          </linearGradient>
+        </defs>
+      </svg>
 
-        <div
-          className="max-w-md w-full mx-auto mt-20 p-8 rounded-3xl shadow-xl glassmorph relative z-10 border border-[#A8E063]/20 bg-[#232b1a]/80"
-        >
-          <div className="flex flex-col items-center mb-6">
-           <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3d5223] shadow-neumorph mb-2 hover:animate-pulse">
+      <div
+        className="max-w-md w-full mx-auto mt-10 sm:mt-20 p-4 sm:p-8 rounded-3xl shadow-xl glassmorph relative z-10 border border-[#A8E063]/20 bg-[#232b1a]/80"
+      >
+        <div className="flex flex-col items-center mb-6">
+          <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3d5223] shadow-neumorph mb-2 hover:animate-pulse">
             <span role="img" aria-label="leaf">
               🌿
             </span>
           </span>
-            <h2 className="text-2xl font-bold text-[#A8E063] text-center font-[Mukta] tracking-tight drop-shadow">
-          Register for Nirogya
-            </h2>
+          <h2 className="text-2xl font-bold text-[#A8E063] text-center font-[Mukta] tracking-tight drop-shadow">
+            Register for Nirogya
+          </h2>
+        </div>
+        {message && (
+          <div
+            className={`mb-4 text-center text-sm transition-all duration-300 ${
+              isError ? "text-red-600" : "text-green-600"
+            }`}
+          >
+            {message}
           </div>
-          {message && (
-            <div
-          className={`mb-4 text-center text-sm transition-all duration-300 ${
-            isError ? "text-red-600" : "text-green-600"
-          }`}
+        )}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-[#A8E063] font-medium mb-1"
             >
-          {message}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-          <label
-            htmlFor="username"
-            className="block text-[#A8E063] font-medium mb-1"
-          >
-            Username
-          </label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
-            required
-          />
-            </div>
-            <div>
-          <label
-            htmlFor="email"
-            className="block text-[#A8E063] font-medium mb-1"
-          >
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
-            required
-          />
-            </div>
-            <div>
-          <label
-            htmlFor="password"
-            className="block text-[#A8E063] font-medium mb-1"
-          >
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
-            required
-          />
-            </div>
-            <div className="flex justify-center">
-          <button
-            type="submit"
-            className="ayur-btn transition duration-200 font-medium text-white py-2 px-8 rounded-xl shadow-neumorph focus:outline-none focus:ring-2 focus:ring-[#A8E063] active:scale-95"
-          >
-            Register
-          </button>
-            </div>
-          </form>
-          <p className="mt-6 text-center text-[#a8e063]">
-            Already have an account?{" "}
-            <Link
-          to="/login"
-          className="text-[#A8E063] hover:text-[#d0e7ff] font-medium underline transition"
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-[#A8E063] font-medium mb-1"
             >
-          Login
-            </Link>
-          </p>
-          {/* Decorative botanical illustration */}
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-[#A8E063] font-medium mb-1"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border border-[#A8E063]/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#A8E063] bg-[#232b1a] text-[#e0ffe0] transition"
+              required
+            />
+          </div>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="ayur-btn transition duration-200 font-medium text-white py-2 px-8 rounded-xl shadow-neumorph focus:outline-none focus:ring-2 focus:ring-[#A8E063] active:scale-95"
+            >
+              Register
+            </button>
+          </div>
+        </form>
+        <p className="mt-6 text-center text-[#a8e063] text-sm sm:text-base">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-[#A8E063] hover:text-[#d0e7ff] font-medium underline transition"
+          >
+            Login
+          </Link>
+        </p>
+        {/* Decorative botanical illustration */}
         <svg
-          className="absolute bottom-0 right-0 w-28 md:w-40 opacity-30 pointer-events-none select-none"
+          className="absolute bottom-0 right-0 w-20 sm:w-28 md:w-40 opacity-30 pointer-events-none select-none"
           viewBox="0 0 120 60"
           fill="none"
         >
@@ -242,6 +243,23 @@ function Register() {
           color: #fff;
           transform: translateY(-2px) scale(1.04);
           box-shadow: 0 6px 24px 0 #a8e06344;
+        }
+        /* Responsive SVG background for mobile */
+        @media (max-width: 640px) {
+          .animate-ayur-parallax {
+            left: -40px !important;
+            top: -40px !important;
+            width: 90vw !important;
+            height: 32vw !important;
+            min-width: 100px !important;
+            min-height: 60px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .glassmorph {
+            padding: 1rem !important;
+            border-radius: 1rem !important;
+          }
         }
       `}</style>
     </div>
