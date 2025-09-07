@@ -23,7 +23,7 @@ function Login() {
     try {
       const data = { email, password };
       const response = await axios.post(
-        "https://nirogya-chatbot-backend.onrender.com/api/auth/login",
+        "http://localhost:3000/api/auth/login",
         data,
         { withCredentials: true }
       );

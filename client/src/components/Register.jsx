@@ -23,7 +23,7 @@ function Register() {
     try {
       const data = { username, email, password };
       const response = await axios.post(
-        "https://nirogya-chatbot-backend.onrender.com/api/auth/register",
+        "http://localhost:3000/api/auth/register",
         data
       );
       setIsError(false);

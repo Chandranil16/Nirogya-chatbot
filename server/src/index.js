@@ -10,7 +10,10 @@ const userrouter=require("./routes/Userroute")
 const chatrouter=require("./routes/Chatroute")
 mongoconnect()
 app.use(cookieParser())
-app.use(cors({origin: "https://nirogya-chatbot.onrender.com", credentials: true}))
+app.use(cors({
+    origin: ["http://localhost:3000", "http://localhost:5173"],
+    credentials: true
+}))
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
