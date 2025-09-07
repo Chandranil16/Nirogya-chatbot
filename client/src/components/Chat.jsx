@@ -104,17 +104,7 @@ const Chat = () => {
     setAllChats(updatedChats);
     setCurrentChatIdx(chatIdx);
 
-    // --- Smart Greeting Logic ---
-    const smartReply = getSmartGreeting(input);
-    if (smartReply) {
-      updatedChats[chatIdx] = [
-        ...updatedChats[chatIdx],
-        { from: "bot", text: smartReply },
-      ];
-      setAllChats([...updatedChats]);
-      setInput("");
-      return;
-    }
+    
 
     // Add a "bot is typing" message before sending the request
     updatedChats[chatIdx] = [
@@ -125,7 +115,7 @@ const Chat = () => {
 
     try {
       const res = await axios.post(
-        "https://nirogya-chatbot-backend.onrender.com/api/chat/generate",
+        "http://localhost:3000/api/chat/generate",
         { query: input },
         { withCredentials: true }
       );
@@ -142,13 +132,15 @@ const Chat = () => {
       ];
       setAllChats([...updatedChats]);
     } catch (err) {
+      console.error("Chat API Error:", err);
+      updatedChats[chatIdx].pop(); // Remove typing message
       updatedChats[chatIdx] = [
         ...updatedChats[chatIdx],
         {
           from: "bot",
           text:
             err?.response?.data?.reply ||
-            "Sorry, I couldn't process your request. Please try again.",
+            "I apologize, but I'm experiencing some technical difficulties right now. Please try asking your question again in a moment. I'm here to help with your Ayurvedic wellness needs! 🌿",
         },
       ];
       setAllChats([...updatedChats]);
@@ -160,7 +152,7 @@ const Chat = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "https://nirogya-chatbot-backend.onrender.com/api/auth/logout",
+        "http://localhost:3000/api/auth/logout",
         {},
         { withCredentials: true }
       );
@@ -238,56 +230,7 @@ const Chat = () => {
     return "";
   }
 
-  // Smart greeting logic
-  function getSmartGreeting(input) {
-    const text = input.trim().toLowerCase();
-    if (/^(hi|hello|hey)\b/.test(text)) {
-      const replies = [
-        "Hey there!",
-        "Hi! How can I help you today?",
-        "Hello ",
-        "Namaste! How can I assist you?",
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    if (/good morning/.test(text)) {
-      const replies = [
-        "Good morning! Hope you have a great day!",
-        "Morning! How can I assist you today?",
-        "Wishing you a healthy morning!",
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    if (/good evening/.test(text)) {
-      const replies = [
-        "Good evening! How’s your day been?",
-        "Good evening! How can I help you?",
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    if (/good night/.test(text)) {
-      const replies = ["Good night! Rest well.", "Sweet dreams! Take care."];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    if (/how are you\??/.test(text)) {
-      const replies = [
-        "I'm just a bot, but I'm here and ready to help!",
-        "Doing great! What can I do for you?",
-        "I'm always here to assist you with Ayurveda.",
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    if (/thank(s| you| u)?[.!]?$/i.test(text)) {
-      const replies = [
-        "You're welcome!",
-        "Happy to help!",
-        "Anytime! Let me know if you have more questions.",
-        "Glad I could assist you.",
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-    return null;
-  }
+  
 
   // Function to adjust textarea height
   const adjustTextareaHeight = () => {
