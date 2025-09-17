@@ -7,8 +7,8 @@ const ChatSchema = new mongoose.Schema(
     userMessageTime: { type: Date, required: true },
     botReply: { type: String, required: true },
     botReplyTime: { type: Date, required: true },
-    conversationId: { type: String, required: false }, // For grouping related chats
-    sessionId: { type: String, required: false } // For session-based grouping
+    conversationId: { type: String, required: true }, // For grouping related chats
+    sessionId: { type: String, required: true } // For session-based grouping
   },
   { timestamps: true }
 );
