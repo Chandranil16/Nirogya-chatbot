@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
+import { useNavigate } from "react-router-dom";
 // Helper to get user name from localStorage
 function getUserName() {
   try {
@@ -24,105 +23,125 @@ function getUserEmail() {
   }
 }
 
-// Helper to get per-user chat key
-function getChatsKey(email) {
-  return `ayurveda_all_chats_${email}`;
-}
-
 const Chat = () => {
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Get current user email
   const userEmail = getUserEmail();
 
-  // Multi-chat state (per user)
-  const [allChats, setAllChats] = useState(() => {
-    if (!userEmail) return [[]]; // Start with empty chat to show welcome
-    const saved = localStorage.getItem(getChatsKey(userEmail));
-    const chats = saved ? JSON.parse(saved) : [];
-    // If no chats exist, start with an empty chat to show welcome screen
-    return chats.length === 0 ? [[]] : chats;
-  });
-  const [currentChatIdx, setCurrentChatIdx] = useState(0);
+  // Multi-chat state (now using MongoDB data structure)
+  const [conversations, setConversations] = useState([]);
+  const [currentConversationIdx, setCurrentConversationIdx] = useState(0);
   const [input, setInput] = useState("");
-  const [isNewChat, setIsNewChat] = useState(false); // Track if we're in a new chat
+  const [loading, setLoading] = useState(true);
+  const [isNewChat, setIsNewChat] = useState(false);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
   const textareaRef = useRef(null);
-
-  // Save all chats to localStorage (per user)
+  // Load conversations from MongoDB on component mount
   useEffect(() => {
     if (userEmail) {
-      // Only save chats that have actual content (not empty welcome chats)
-      const chatsToSave = allChats.filter((chat) => chat.length > 0);
-      localStorage.setItem(getChatsKey(userEmail), JSON.stringify(chatsToSave));
-    }
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allChats, currentChatIdx, userEmail]);
-
-  // On mount or when userEmail changes, load only that user's chats
-  useEffect(() => {
-    if (userEmail) {
-      const saved = localStorage.getItem(getChatsKey(userEmail));
-      const chats = saved ? JSON.parse(saved) : [];
-      // Always start with welcome screen if no chats or on fresh login
-      if (chats.length === 0) {
-        setAllChats([[]]);
-        setCurrentChatIdx(0);
-      } else {
-        setAllChats(chats);
-        setCurrentChatIdx(0);
-      }
+      loadConversations();
     } else {
-      // Not logged in, show welcome screen
-      setAllChats([[]]);
-      setCurrentChatIdx(0);
+      setConversations([[]]);
+      setLoading(false);
     }
   }, [userEmail]);
 
-  const messages = allChats[currentChatIdx] || [];
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversations, currentConversationIdx]);
 
+  // Load conversations from backend
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        "http://localhost:3000/api/chat/conversations",
+        { withCredentials: true }
+      );
+
+      const loadedConversations = response.data.conversations || [];
+
+      // Convert backend format to frontend format
+      const formattedConversations = loadedConversations.map((conversation) =>
+        conversation.flatMap((chat) => [
+          { from: "user", text: chat.userMessage, id: chat._id },
+          { from: "bot", text: chat.botReply, id: chat._id },
+        ])
+      );
+
+      // If no conversations, start with empty one for welcome screen
+      if (formattedConversations.length === 0) {
+        setConversations([[]]);
+        setCurrentConversationIdx(0);
+      } else {
+        setConversations(formattedConversations);
+        setCurrentConversationIdx(0);
+      }
+    } catch (error) {
+      console.error("Error loading conversations:", error);
+      setConversations([[]]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentMessages = conversations[currentConversationIdx] || [];
   // --- Chat Send Logic ---
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    let updatedChats = [...allChats];
-    let chatIdx = currentChatIdx;
+    // Store the input value before clearing
+    const userQuery = input;
 
-    // If starting a new chat, create it and update state
-    if (isNewChat || allChats.length === 0) {
-      updatedChats = [...allChats, [{ from: "user", text: input }]];
-      chatIdx = updatedChats.length - 1;
+    // Clear input immediately after user sends message
+    setInput("");
+    let updatedConversations = [...conversations];
+    let convIdx = currentConversationIdx;
+
+    // If starting a new chat, create new conversation
+    if (
+      isNewChat ||
+      conversations.length === 0 ||
+      currentMessages.length === 0
+    ) {
+      updatedConversations = [
+        ...conversations,
+        [{ from: "user", text: userQuery }],
+      ];
+      convIdx = updatedConversations.length - 1;
       setIsNewChat(false);
     } else {
-      updatedChats[chatIdx] = [
-        ...updatedChats[chatIdx],
-        { from: "user", text: input },
+      updatedConversations[convIdx] = [
+        ...updatedConversations[convIdx],
+        { from: "user", text: userQuery },
       ];
     }
-    setAllChats(updatedChats);
-    setCurrentChatIdx(chatIdx);
 
-    
+    setConversations(updatedConversations);
+    setCurrentConversationIdx(convIdx);
 
-    // Add a "bot is typing" message before sending the request
-    updatedChats[chatIdx] = [
-      ...updatedChats[chatIdx],
+    // Add typing indicator
+    updatedConversations[convIdx] = [
+      ...updatedConversations[convIdx],
       { from: "bot", text: "Nirogya is typing..." },
     ];
-    setAllChats([...updatedChats]);
+    setConversations([...updatedConversations]);
 
     try {
       const res = await axios.post(
         "http://localhost:3000/api/chat/generate",
-        { query: input },
+        { query: userQuery },
         { withCredentials: true }
       );
-      // Replace the "typing" message with the real reply
-      updatedChats[chatIdx].pop();
-      updatedChats[chatIdx] = [
-        ...updatedChats[chatIdx],
+
+      // Remove typing indicator and add real response
+      updatedConversations[convIdx].pop();
+      updatedConversations[convIdx] = [
+        ...updatedConversations[convIdx],
         {
           from: "bot",
           text:
@@ -130,12 +149,12 @@ const Chat = () => {
             "Sorry, I don't know about that. Please ask something related to Ayurveda.",
         },
       ];
-      setAllChats([...updatedChats]);
+      setConversations([...updatedConversations]);
     } catch (err) {
       console.error("Chat API Error:", err);
-      updatedChats[chatIdx].pop(); // Remove typing message
-      updatedChats[chatIdx] = [
-        ...updatedChats[chatIdx],
+      updatedConversations[convIdx].pop();
+      updatedConversations[convIdx] = [
+        ...updatedConversations[convIdx],
         {
           from: "bot",
           text:
@@ -143,9 +162,8 @@ const Chat = () => {
             "I apologize, but I'm experiencing some technical difficulties right now. Please try asking your question again in a moment. I'm here to help with your Ayurvedic wellness needs! 🌿",
         },
       ];
-      setAllChats([...updatedChats]);
+      setConversations([...updatedConversations]);
     }
-    setInput("");
   };
 
   // Logout handler
@@ -167,70 +185,102 @@ const Chat = () => {
 
   // New chat handler
   const handleNewChat = () => {
-    // Create a new empty chat - this will trigger the empty state welcome screen
-    const newChats = [...allChats, []];
-    setAllChats(newChats);
-    setCurrentChatIdx(newChats.length - 1);
+    const newConversations = [...conversations, []];
+    setConversations(newConversations);
+    setCurrentConversationIdx(newConversations.length - 1);
     setIsNewChat(true);
     setInput("");
     setSidebarOpen(false);
   };
 
-  // Switch chat in sidebar
-  const handleSwitchChat = (idx) => {
-    setCurrentChatIdx(idx);
+  // Switch conversation
+  const handleSwitchConversation = (idx) => {
+    setCurrentConversationIdx(idx);
     setSidebarOpen(false);
   };
 
-  // Clear chat history
-  const handleClearHistory = () => {
-    // Reset to welcome screen with one empty chat
-    setAllChats([[]]);
-    setCurrentChatIdx(0);
-    setSidebarOpen(false);
+  // Clear all chats
+  const handleClearHistory = async () => {
+    try {
+      await axios.delete("http://localhost:3000/api/chat/all", {
+        withCredentials: true,
+      });
+
+      // Reset to welcome screen
+      setConversations([[]]);
+      setCurrentConversationIdx(0);
+      setSidebarOpen(false);
+    } catch (error) {
+      console.error("Error clearing chats:", error);
+      // Fallback to local clear if API fails
+      setConversations([[]]);
+      setCurrentConversationIdx(0);
+      setSidebarOpen(false);
+    }
   };
 
-  // Replace the handleDeleteChat function:
-
-  const handleDeleteChat = (idx, e) => {
+  // Delete single conversation
+  const handleDeleteConversation = async (idx, e) => {
     e.stopPropagation();
 
-    const newChats = allChats.filter((_, chatIdx) => chatIdx !== idx);
+    try {
+      // Get the first message ID from this conversation to identify it
+      const conversation = conversations[idx];
+      if (conversation.length > 0) {
+        const firstMessageId = conversation.find((msg) => msg.id)?.id;
+        if (firstMessageId) {
+          await axios.delete(
+            `http://localhost:3000/api/chat/chat/${firstMessageId}`,
+            { withCredentials: true }
+          );
+        }
+      }
 
-    // If no chats left after deletion, create an empty chat for welcome screen
-    if (newChats.length === 0) {
-      setAllChats([[]]);
-      setCurrentChatIdx(0);
-    } else {
-      setAllChats(newChats);
-      // Adjust current index if needed
-      if (idx <= currentChatIdx) {
-        const newIndex = Math.max(0, currentChatIdx - 1);
-        setCurrentChatIdx(newIndex);
+      // Update local state
+      const newConversations = conversations.filter(
+        (_, convIdx) => convIdx !== idx
+      );
+
+      if (newConversations.length === 0) {
+        setConversations([[]]);
+        setCurrentConversationIdx(0);
+      } else {
+        setConversations(newConversations);
+        if (idx <= currentConversationIdx) {
+          const newIndex = Math.max(0, currentConversationIdx - 1);
+          setCurrentConversationIdx(newIndex);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      // Fallback to local delete if API fails
+      const newConversations = conversations.filter(
+        (_, convIdx) => convIdx !== idx
+      );
+      if (newConversations.length === 0) {
+        setConversations([[]]);
+        setCurrentConversationIdx(0);
+      } else {
+        setConversations(newConversations);
+        if (idx <= currentConversationIdx) {
+          const newIndex = Math.max(0, currentConversationIdx - 1);
+          setCurrentConversationIdx(newIndex);
+        }
       }
     }
   };
 
-  // --- Helper: Chat summary for sidebar ---
-  function chatSummary(chat) {
-    // Show the first user message as summary if it exists
-    const firstUserMsg = chat.find((m) => m.from === "user");
-    if (firstUserMsg)
+  // Helper: Get conversation summary
+  function getConversationSummary(conversation) {
+    const firstUserMsg = conversation.find((m) => m.from === "user");
+    if (firstUserMsg) {
       return (
         firstUserMsg.text.slice(0, 30) +
         (firstUserMsg.text.length > 30 ? "..." : "")
       );
-    // Otherwise, show the first bot message as fallback
-    return (
-      chat[0]?.text.slice(0, 30) + (chat[0]?.text.length > 30 ? "..." : "")
-    );
+    }
+    return "New Chat";
   }
-  function chatTimestamp() {
-    // No timestamp, so just return empty string or a static label if you want
-    return "";
-  }
-
-  
 
   // Function to adjust textarea height
   const adjustTextareaHeight = () => {
@@ -249,6 +299,24 @@ const Chat = () => {
   };
 
   // --- Main Render ---
+  if (loading) {
+    return (
+      <div className="ayur-chat-root dark">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            fontSize: "1.2rem",
+            color: "#a8e063",
+          }}
+        >
+          Loading your conversations...
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="ayur-chat-root dark">
       {/* Sidebar Drawer */}
@@ -299,25 +367,33 @@ const Chat = () => {
             Chat History
           </div>
           <div className="ayur-sidebar-history">
-            {allChats
-              .map((chat, originalIdx) => ({ chat, originalIdx }))
-              .filter(({ chat }) => chat.length > 0 && chat.some((m) => m.from === "user"))
-              .map(({ chat, originalIdx }) => (
+            {conversations
+              .map((conversation, originalIdx) => ({
+                conversation,
+                originalIdx,
+              }))
+              .filter(
+                ({ conversation }) =>
+                  conversation.length > 0 &&
+                  conversation.some((m) => m.from === "user")
+              )
+              .map(({ conversation, originalIdx }) => (
                 <div
                   key={originalIdx}
-                  className={`ayur-sidebar-history-item ayur-animated-history${originalIdx === currentChatIdx ? " active" : ""}`}
-                  onClick={() => handleSwitchChat(originalIdx)}
+                  className={`ayur-sidebar-history-item ayur-animated-history${
+                    originalIdx === currentConversationIdx ? " active" : ""
+                  }`}
+                  onClick={() => handleSwitchConversation(originalIdx)}
                 >
                   <div className="ayur-history-content">
-                    <div style={{ fontWeight: 500 }}>{chatSummary(chat)}</div>
-                    <div style={{ fontSize: "0.85em", color: "#a8e063" }}>
-                      {chatTimestamp(chat)}
+                    <div style={{ fontWeight: 500 }}>
+                      {getConversationSummary(conversation)}
                     </div>
                   </div>
                   <button
                     className="ayur-delete-chat-btn"
-                    onClick={(e) => handleDeleteChat(originalIdx, e)}
-                    aria-label="Delete chat"
+                    onClick={(e) => handleDeleteConversation(originalIdx, e)}
+                    aria-label="Delete conversation"
                   >
                     <svg
                       width="14"
@@ -406,7 +482,7 @@ const Chat = () => {
       <main className="ayur-chat-main ">
         <div className="ayur-chat-scroll ">
           <div className="ayur-chat-bubbles">
-            {messages.length === 0 ? (
+            {currentMessages.length === 0 ? (
               <div className="ayur-empty-state">
                 <div className="ayur-welcome-icon">
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full  shadow-neumorph hover:animate-pulse ayur-animated-icon">
@@ -459,7 +535,7 @@ const Chat = () => {
                 </div>
               </div>
             ) : (
-              messages.map((msg, idx) => (
+              currentMessages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`ayur-bubble ayur-${msg.from} animate-pop`}

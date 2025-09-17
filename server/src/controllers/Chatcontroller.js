@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-
+const Chat = require("../models/Chatmodel");
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Enhanced greeting detection
@@ -38,6 +38,21 @@ const farewells = [
   "good night",
   "goodnight",
   "alvida",
+  "will come back",
+  "come back later",
+  "talk later",
+  "speak later",
+  "later",
+  "ttyl",
+  "talk to you later",
+  "see you later",
+  "catch you later",
+  "until next time",
+  "going now",
+  "have to go",
+  "gotta go",
+  "leaving now",
+  "signing off"
 ];
 
 // Casual conversation detection
@@ -56,7 +71,9 @@ const casualPhrases = [
 
 // Function to check if text contains greeting patterns
 const containsGreeting = (text) => {
-  return greetings.some((greet) => text.includes(greet) || text.startsWith(greet));
+  return greetings.some(
+    (greet) => text.includes(greet) || text.startsWith(greet)
+  );
 };
 
 // Function to check if text contains gratitude patterns
@@ -165,7 +182,10 @@ const getConversationalResponse = (text) => {
     if (normalized.includes("how are you")) {
       return "Namaste! I'm doing well, thank you for asking. I'm Nirogya, your Ayurvedic wellness assistant. I'm here to help you with natural health solutions, herbal remedies, and lifestyle guidance based on ancient Ayurvedic wisdom. How can I support your wellness journey today?";
     }
-    if (normalized.includes("who are you") || normalized.includes("what are you")) {
+    if (
+      normalized.includes("who are you") ||
+      normalized.includes("what are you")
+    ) {
       return "I'm Nirogya, your dedicated Ayurvedic wellness companion! I specialize in providing guidance on natural healing, herbal remedies, dosha balancing, and holistic wellness practices. Whether you need help with specific health concerns or want to learn about preventive care, I'm here to help with traditional Ayurvedic wisdom.";
     }
     if (normalized.includes("what can you do")) {
@@ -195,18 +215,37 @@ exports.getchatresponse = async (req, res) => {
 
   const normalized = query.trim().toLowerCase();
 
+  const username = req.user.username; // Make sure your auth middleware sets req.user
+  const userMessageTime = new Date();
+
   // First check for conversational responses
   const conversationalReply = getConversationalResponse(normalized);
   if (conversationalReply) {
+    // Save chat to MongoDB
+    await Chat.create({
+      username,
+      userMessage: query,
+      userMessageTime,
+      botReply: conversationalReply,
+      botReplyTime: new Date(),
+    });
     return res.json({ reply: conversationalReply });
   }
 
   // Check if it's a health-related query
   if (!containsHealthQuery(normalized)) {
     // If no health keywords found, give a gentle redirect
-    return res.json({
-      reply: "I specialize in Ayurvedic health and wellness guidance. I can help you with natural remedies, herbal treatments, dosha balancing, dietary advice, and lifestyle tips for various health conditions.\n\nPlease ask me about any health concerns, symptoms, or wellness topics you'd like to explore through Ayurveda! 🌿",
+    const reply =
+      "I specialize in Ayurvedic health and wellness guidance. I can help you with natural remedies, herbal treatments, dosha balancing, dietary advice, and lifestyle tips for various health conditions.\n\nPlease ask me about any health concerns, symptoms, or wellness topics you'd like to explore through Ayurveda! 🌿";
+    // Save chat to MongoDB
+    await Chat.create({
+      username,
+      userMessage: query,
+      userMessageTime,
+      botReply: reply,
+      botReplyTime: new Date(),
     });
+    return res.json({ reply });
   }
 
   try {
@@ -372,11 +411,121 @@ User query: ${query}
 `;
     const result = await model.generateContent(prompt);
     const text = result.response.text();
+
+    // Save chat to MongoDB
+    await Chat.create({
+      username,
+      userMessage: query,
+      userMessageTime,
+      botReply: text,
+      botReplyTime: new Date(),
+    });
+
     res.json({ reply: text });
   } catch (err) {
     console.error("Gemini API Error:", err);
-    res.status(500).json({
-      reply: "I apologize, but I'm experiencing some technical difficulties right now. Please try asking your health question again in a moment. I'm here to help with your Ayurvedic wellness needs! 🌿",
+    const reply =
+      "I apologize, but I'm experiencing some technical difficulties right now. Please try asking your health question again in a moment. I'm here to help with your Ayurvedic wellness needs! 🌿";
+    // Save error chat to MongoDB
+    await Chat.create({
+      username,
+      userMessage: query,
+      userMessageTime,
+      botReply: reply,
+      botReplyTime: new Date(),
     });
+    res.status(500).json({ reply });
+  }
+};
+
+exports.getUserChats = async (req, res) => {
+  try {
+    const username = req.user.username || req.user.email || req.user.name;
+    const chats = await Chat.find({ username }).sort({ userMessageTime: 1 });
+    res.json(chats);
+  } catch (error) {
+    console.error("Error fetching chats:", error);
+    res.status(500).json({ message: "Failed to fetch chats" });
+  }
+};
+
+// Update deleteChat function:
+exports.deleteChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const username = req.user.username || req.user.email || req.user.name;
+
+    const deletedChat = await Chat.findOneAndDelete({
+      _id: chatId,
+      username: username,
+    });
+
+    if (!deletedChat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    res.json({ message: "Chat deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting chat:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update deleteAllChats function:
+exports.deleteAllChats = async (req, res) => {
+  try {
+    const username = req.user.username || req.user.email || req.user.name;
+
+    await Chat.deleteMany({ username: username });
+
+    res.json({ message: "All chats deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting all chats:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get chat conversations grouped by session/conversation
+exports.getChatConversations = async (req, res) => {
+  try {
+    const username = req.user.username || req.user.email || req.user.name;
+
+    const chats = await Chat.find({ username }).sort({ userMessageTime: 1 });
+
+    const conversations = [];
+    let currentConversation = [];
+    let lastChatTime = null;
+
+    chats.forEach((chat) => {
+       if (
+        lastChatTime &&
+        chat.userMessageTime - lastChatTime > 30 * 60 * 1000
+      ) {
+        if (currentConversation.length > 0) {
+          conversations.push(currentConversation);
+          currentConversation = [];
+        }
+      }
+
+      currentConversation.push({
+        _id: chat._id,
+        userMessage: chat.userMessage,
+        botReply: chat.botReply,
+        userMessageTime: chat.userMessageTime,
+        botReplyTime: chat.botReplyTime,
+      });
+
+      lastChatTime = chat.botReplyTime;
+    });
+
+
+    if (currentConversation.length > 0) {
+      conversations.push(currentConversation);
+    }
+
+    res.json({ conversations });
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ message: error.message });
   }
 };
