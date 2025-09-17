@@ -7,7 +7,7 @@ const ChatSchema = new mongoose.Schema(
     userMessageTime: { type: Date, required: true },
     botReply: { type: String, required: true },
     botReplyTime: { type: Date, required: true },
-    conversationId: { type: String, required: true }, // This field is crucial
+    conversationId: { type: String, required: false }, // This field is crucial
   },
   { timestamps: true }
 );
