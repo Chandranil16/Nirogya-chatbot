@@ -170,7 +170,7 @@ const Chat = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:3000/api/auth/logout",
+        "https://nirogya-chatbot-backend.onrender.com/api/auth/logout",
         {},
         { withCredentials: true }
       );
