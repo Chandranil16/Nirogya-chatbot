@@ -58,7 +58,7 @@ const Chat = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        "http://localhost:3000/api/chat/conversations",
+        "https://nirogya-chatbot-backend.onrender.com/api/chat/conversations",
         { withCredentials: true }
       );
 
@@ -133,7 +133,7 @@ const Chat = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/chat/generate",
+        "https://nirogya-chatbot-backend.onrender.com/api/chat/generate",
         { query: userQuery },
         { withCredentials: true }
       );
@@ -202,7 +202,7 @@ const Chat = () => {
   // Clear all chats
   const handleClearHistory = async () => {
     try {
-      await axios.delete("http://localhost:3000/api/chat/all", {
+      await axios.delete("https://nirogya-chatbot-backend.onrender.com/api/chat/all", {
         withCredentials: true,
       });
 
@@ -230,7 +230,7 @@ const Chat = () => {
         const firstMessageId = conversation.find((msg) => msg.id)?.id;
         if (firstMessageId) {
           await axios.delete(
-            `http://localhost:3000/api/chat/chat/${firstMessageId}`,
+            `https://nirogya-chatbot-backend.onrender.com/api/chat/chat/${firstMessageId}`,
             { withCredentials: true }
           );
         }
