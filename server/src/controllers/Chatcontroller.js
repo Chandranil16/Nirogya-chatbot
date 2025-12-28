@@ -52,7 +52,7 @@ const farewells = [
   "have to go",
   "gotta go",
   "leaving now",
-  "signing off"
+  "signing off",
 ];
 
 // Casual conversation detection
@@ -150,7 +150,50 @@ const containsHealthQuery = (text) => {
 
   return healthKeywords.some((keyword) => text.includes(keyword));
 };
-
+// Function to check if text is a follow-up question
+const isFollowUpQuestion = (text) => {
+  const followUpKeywords = [
+    "what about",
+    "how about",
+    "tell me more",
+    "more about",
+    "explain",
+    "symptoms",
+    "causes",
+    "treatment",
+    "remedy",
+    "cure",
+    "help with",
+    "what are",
+    "how to",
+    "can you",
+    "please",
+    "also",
+    "additionally",
+    "furthermore",
+    "moreover",
+    "besides",
+    "early stage",
+    "late stage",
+    "prevention",
+    "diet for",
+    "food for",
+    "exercise for",
+    "yoga for",
+    "anything else",
+    "what else",
+    "other",
+    "alternative",
+    "side effects",
+    "precautions",
+    "dosage",
+    "how long",
+    "duration",
+    "when to",
+    "recommended",
+  ];
+  return followUpKeywords.some((keyword) => text.includes(keyword));
+};
 // Function to get appropriate conversational response
 const getConversationalResponse = (text) => {
   const normalized = text.trim().toLowerCase();
@@ -232,12 +275,24 @@ exports.getchatresponse = async (req, res) => {
     return res.json({ reply: conversationalReply });
   }
 
-  // Check if it's a health-related query
-  if (!containsHealthQuery(normalized)) {
-    // If no health keywords found, give a gentle redirect
+  // Get recent chat history for context (last 5 messages within 30 minutes)
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+  const recentChats = await Chat.find({
+    username,
+    userMessageTime: { $gte: thirtyMinutesAgo },
+  })
+    .sort({ userMessageTime: -1 })
+    .limit(5);
+
+  // Check if current query is health-related OR if it's a follow-up question
+  const isHealthQuery = containsHealthQuery(normalized);
+  const isFollowUp = isFollowUpQuestion(normalized);
+  const hasRecentContext = recentChats.length > 0;
+
+  // If it's not a health query and not a follow-up with context, give generic response
+  if (!isHealthQuery && !(isFollowUp && hasRecentContext)) {
     const reply =
       "I specialize in Ayurvedic health and wellness guidance. I can help you with natural remedies, herbal treatments, dosha balancing, dietary advice, and lifestyle tips for various health conditions.\n\nPlease ask me about any health concerns, symptoms, or wellness topics you'd like to explore through Ayurveda! 🌿";
-    // Save chat to MongoDB
     await Chat.create({
       username,
       userMessage: query,
@@ -249,7 +304,18 @@ exports.getchatresponse = async (req, res) => {
   }
 
   try {
-    const model = genai.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genai.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Build conversation context from recent chats
+    let conversationContext = "";
+    if (hasRecentContext) {
+      conversationContext = "\n\nPrevious conversation context:\n";
+      // Reverse to show oldest first
+      recentChats.reverse().forEach((chat) => {
+        conversationContext += `User: ${chat.userMessage}\nAssistant: ${chat.botReply}\n\n`;
+      });
+      conversationContext +=
+        "Based on the above conversation context, please answer the following question:\n\n";
+    }
     const prompt = `
 You are a knowledgeable Ayurveda assistant. When a user describes a health issue (whether for themselves, family members, friends, or general questions), respond with structured information based on Ayurvedic principles.
 
@@ -257,11 +323,15 @@ IMPORTANT: Respond to ALL health-related queries whether they are:
 - First person: "I have a headache", "I feel tired"
 - Third person: "My mother has diabetes", "My friend feels stressed", "My brother has acidity"
 - General questions: "What helps with insomnia?", "How to treat anxiety?"
+- Follow-up questions: "What are the symptoms?", "Tell me more about treatment", "What diet should be followed?"
 
 For third-person queries, adapt your language appropriately:
 - "Your mother might benefit from..."
 - "Your friend could try..."
 - "For your brother's condition..."
+
+For follow-up questions, provide detailed information based on the previous context. If asking about symptoms, causes, diet, treatment etc. without mentioning the specific condition, refer to the condition discussed in the previous messages.
+
 
 Always include:
 1. Ayurvedic Name
@@ -407,7 +477,7 @@ Precautions
 
 Note: Please ensure your mother consults both an Ayurvedic practitioner and her current doctor for integrated care.
 
-User query: ${query}
+${conversationContext}User query: ${query}
 `;
     const result = await model.generateContent(prompt);
     const text = result.response.text();
@@ -497,7 +567,7 @@ exports.getChatConversations = async (req, res) => {
     let lastChatTime = null;
 
     chats.forEach((chat) => {
-       if (
+      if (
         lastChatTime &&
         chat.userMessageTime - lastChatTime > 30 * 60 * 1000
       ) {
@@ -517,7 +587,6 @@ exports.getChatConversations = async (req, res) => {
 
       lastChatTime = chat.botReplyTime;
     });
-
 
     if (currentConversation.length > 0) {
       conversations.push(currentConversation);
