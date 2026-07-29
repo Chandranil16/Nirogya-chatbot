@@ -304,7 +304,7 @@ exports.getchatresponse = async (req, res) => {
   }
 
   try {
-    const model = genai.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const model = genai.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
     // Build conversation context from recent chats
     let conversationContext = "";
     if (hasRecentContext) {
