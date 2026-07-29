@@ -35,7 +35,7 @@
 
   **Backend**: Node.js, Express.js, MongoDB, JWT, bcrypt, nodemon, CORS
 
-  **AI Prompting**: Few-shot templates for structured Ayurveda responses using **gemini-2.5-flash**
+  **AI Prompting**: Few-shot templates for structured Ayurveda responses using **gemini-3.5-flash-lite**
 
 ---
 
